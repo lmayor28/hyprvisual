@@ -86,50 +86,6 @@ class DisplayManager:
         except subprocess.CalledProcessError as e:
             return False, f"Error: {e.stderr}"
 
-    @staticmethod
-    def identify_displays(displays: "List[Display]", duration_ms: int = 3000) -> None:
-        """
-        Flash a numbered hyprctl notification on each active monitor.
-        Cycles focus to each monitor and sends the notification there.
-        """
-        import time
-        saved = None
-        try:
-            # Remember which monitor is currently focused
-            result = subprocess.run(
-                ["hyprctl", "activeworkspace", "-j"],
-                capture_output=True, text=True
-            )
-            import json as _json
-            ws_data = _json.loads(result.stdout)
-            saved = ws_data.get("monitor", None)
-        except Exception:
-            pass
-
-        for i, d in enumerate(displays):
-            if d.disabled:
-                continue
-            num = i + 1
-            # Focus that monitor so the notification appears there
-            subprocess.run(
-                ["hyprctl", "dispatch", "focusmonitor", d.name],
-                capture_output=True
-            )
-            time.sleep(0.05)  # brief pause to let focus settle
-            subprocess.run([
-                "hyprctl", "notify",
-                "0",                          # no icon
-                str(duration_ms),
-                "rgb(ffdd00)",
-                f"fontsize:72 Monitor {num}: {d.name}"
-            ], capture_output=True)
-
-        # Restore original monitor focus
-        if saved:
-            subprocess.run(
-                ["hyprctl", "dispatch", "focusmonitor", saved],
-                capture_output=True
-            )
 
     @staticmethod
     def set_mirror(source: str, mirror: str):
