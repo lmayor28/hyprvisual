@@ -263,7 +263,7 @@ class DisplayWidget(Horizontal):
 
             with Vertical(classes="display-hints"):
                 yield Label("[$accent]Space[/$accent]  On/Off", classes="hint-label", markup=True)
-                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z-pick", classes="hint-label", markup=True)
+                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z-pick  ·  [$accent]i[/$accent]dentify", classes="hint-label", markup=True)
 
             # Switch is non-focusable; the card itself is the focus unit
             switch = Switch(id=f"switch-{self.monitor.name}")
@@ -431,6 +431,7 @@ class DisplayTUIApp(App):
         ("q", "quit", "Quit"),
         ("r", "refresh_displays", "Refresh"),
         ("t", "cycle_theme", "Cycle Theme"),
+        ("i", "identify_displays", "Identify Monitors"),
     ]
 
     THEMES_LIST = ["textual-dark", "glass", "hacker", "nordic"]
@@ -478,6 +479,22 @@ class DisplayTUIApp(App):
         new_theme = self.THEMES_LIST[self.current_theme_idx]
         self.theme = new_theme
         self.notify(f"Theme: {new_theme.title()}", severity="information")
+
+    def action_identify_displays(self) -> None:
+        """Show numbered overlays on each physical monitor for 3 seconds."""
+        active = [d for d in self._displays if not d.disabled]
+        if not active:
+            self.notify("No active monitors to identify.", severity="warning")
+            return
+        self.notify("Showing monitor numbers for 3 seconds...", severity="information")
+        # Run in background thread so TUI stays responsive
+        import threading
+        t = threading.Thread(
+            target=DisplayManager.identify_displays,
+            args=(active,),
+            daemon=True
+        )
+        t.start()
 
     def refresh_displays(self) -> None:
         display_list = self.query_one("#display-list")

@@ -87,6 +87,48 @@ class DisplayManager:
             return False, f"Error: {e.stderr}"
 
     @staticmethod
+    def identify_displays(displays: "List[Display]", duration_ms: int = 3000) -> None:
+        """
+        Show a numbered overlay on each active monitor for `duration_ms` ms.
+        Uses tkinter via XWayland so it works on Hyprland/Wayland.
+        Each monitor gets its own thread so they all appear simultaneously.
+        """
+        import threading, textwrap
+
+        def _show(num: int, x: int, y: int, w: int, h: int) -> None:
+            script = textwrap.dedent(f"""
+                import tkinter as tk
+                root = tk.Tk()
+                root.overrideredirect(True)
+                root.attributes('-topmost', True)
+                root.configure(bg='black')
+                # Centre the 200×200 window in the monitor
+                win_w, win_h = 200, 200
+                cx = {x} + ({w} - win_w) // 2
+                cy = {y} + ({h} - win_h) // 2
+                root.geometry(f'{{win_w}}x{{win_h}}+{{cx}}+{{cy}}')
+                lbl = tk.Label(root, text='{num}',
+                               font=('Monospace', 96, 'bold'),
+                               fg='yellow', bg='black')
+                lbl.pack(expand=True, fill='both')
+                root.after({duration_ms}, root.destroy)
+                root.mainloop()
+            """)
+            subprocess.run(["python3", "-c", script], capture_output=True)
+
+        threads = []
+        for i, d in enumerate(displays):
+            if d.disabled:
+                continue
+            t = threading.Thread(
+                target=_show,
+                args=(i + 1, d.x, d.y, d.width, d.height),
+                daemon=True
+            )
+            t.start()
+            threads.append(t)
+
+    @staticmethod
     def set_mirror(source: str, mirror: str):
         """Set 'mirror' to mirror 'source'."""
         cmd = ["hyprctl", "keyword", "monitor", f"{mirror},preferred,auto,1,mirror,{source}"]
