@@ -89,44 +89,47 @@ class DisplayManager:
     @staticmethod
     def identify_displays(displays: "List[Display]", duration_ms: int = 3000) -> None:
         """
-        Show a numbered overlay on each active monitor for `duration_ms` ms.
-        Uses tkinter via XWayland so it works on Hyprland/Wayland.
-        Each monitor gets its own thread so they all appear simultaneously.
+        Flash a numbered hyprctl notification on each active monitor.
+        Cycles focus to each monitor and sends the notification there.
         """
-        import threading, textwrap
+        import time
+        saved = None
+        try:
+            # Remember which monitor is currently focused
+            result = subprocess.run(
+                ["hyprctl", "activeworkspace", "-j"],
+                capture_output=True, text=True
+            )
+            import json as _json
+            ws_data = _json.loads(result.stdout)
+            saved = ws_data.get("monitor", None)
+        except Exception:
+            pass
 
-        def _show(num: int, x: int, y: int, w: int, h: int) -> None:
-            script = textwrap.dedent(f"""
-                import tkinter as tk
-                root = tk.Tk()
-                root.overrideredirect(True)
-                root.attributes('-topmost', True)
-                root.configure(bg='black')
-                # Centre the 200×200 window in the monitor
-                win_w, win_h = 200, 200
-                cx = {x} + ({w} - win_w) // 2
-                cy = {y} + ({h} - win_h) // 2
-                root.geometry(f'{{win_w}}x{{win_h}}+{{cx}}+{{cy}}')
-                lbl = tk.Label(root, text='{num}',
-                               font=('Monospace', 96, 'bold'),
-                               fg='yellow', bg='black')
-                lbl.pack(expand=True, fill='both')
-                root.after({duration_ms}, root.destroy)
-                root.mainloop()
-            """)
-            subprocess.run(["python3", "-c", script], capture_output=True)
-
-        threads = []
         for i, d in enumerate(displays):
             if d.disabled:
                 continue
-            t = threading.Thread(
-                target=_show,
-                args=(i + 1, d.x, d.y, d.width, d.height),
-                daemon=True
+            num = i + 1
+            # Focus that monitor so the notification appears there
+            subprocess.run(
+                ["hyprctl", "dispatch", "focusmonitor", d.name],
+                capture_output=True
             )
-            t.start()
-            threads.append(t)
+            time.sleep(0.05)  # brief pause to let focus settle
+            subprocess.run([
+                "hyprctl", "notify",
+                "0",                          # no icon
+                str(duration_ms),
+                "rgb(ffdd00)",
+                f"fontsize:72 Monitor {num}: {d.name}"
+            ], capture_output=True)
+
+        # Restore original monitor focus
+        if saved:
+            subprocess.run(
+                ["hyprctl", "dispatch", "focusmonitor", saved],
+                capture_output=True
+            )
 
     @staticmethod
     def set_mirror(source: str, mirror: str):
