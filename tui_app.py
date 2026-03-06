@@ -8,6 +8,10 @@ from display_manager import DisplayManager, Display
 from typing import List
 
 
+# ─────────────────────────────────────────────────────────────
+#  Modals
+# ─────────────────────────────────────────────────────────────
+
 class MirrorSelectScreen(ModalScreen[str | None]):
     """Modal to select a source monitor to mirror from."""
 
@@ -23,23 +27,21 @@ class MirrorSelectScreen(ModalScreen[str | None]):
             with Center():
                 with Vertical(id="mirror-dialog"):
                     yield Label(f"󰿏  Mirror  {self.target_name}  from:", id="mirror-title")
-                    yield Label("Select a source (↑↓ navigate, Enter/Space select):", id="mirror-prompt")
+                    yield Label("↑↓ navigate · Enter/Space select · Esc cancel", id="mirror-prompt")
                     with Vertical(id="mirror-options"):
                         for m in self.monitors:
                             if m.name != self.target_name:
                                 yield Button(
                                     f"󰍹  {m.name}  ({m.description[:30]})",
                                     id=f"mirror-src-{m.name}",
-                                    classes="mirror-btn"
+                                    classes="modal-btn"
                                 )
-                        yield Button("✕  Disable Mirror Mode", variant="warning", id="mirror-disable")
-                    yield Button("Cancel", variant="default", id="mirror-cancel")
+                        yield Button("✕  Disable Mirror Mode", variant="warning", id="mirror-disable", classes="modal-btn")
+                    yield Button("Cancel", variant="default", id="mirror-cancel", classes="modal-btn")
 
     def on_mount(self) -> None:
-        # Focus the first option automatically for keyboard navigation
         try:
-            first_btn = self.query(".mirror-btn").first(Button)
-            first_btn.focus()
+            self.query(".modal-btn").first(Button).focus()
         except Exception:
             pass
 
@@ -47,95 +49,85 @@ class MirrorSelectScreen(ModalScreen[str | None]):
         self.dismiss(None)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        btn_id = event.button.id
+        btn_id = event.button.id or ""
         if btn_id == "mirror-cancel":
             self.dismiss(None)
         elif btn_id == "mirror-disable":
             self.dismiss("__disable__")
-        elif btn_id and btn_id.startswith("mirror-src-"):
+        elif btn_id.startswith("mirror-src-"):
             self.dismiss(btn_id[len("mirror-src-"):])
 
 
-class DisplayWidget(Horizontal):
-    """A focusable card widget for a single display."""
+class HzSelectScreen(ModalScreen[str | None]):
+    """Modal to select a display mode (resolution@Hz)."""
 
-    can_focus = True         # Allow Tab to land on this widget
-    is_enabled = reactive(False)
+    BINDINGS = [("escape", "cancel", "Cancel")]
 
-    BINDINGS = [
-        ("space", "toggle_switch", "Toggle On/Off"),
-        ("m", "open_mirror", "Mirror"),
-        ("enter", "toggle_switch", "Toggle On/Off"),
-    ]
-
-    def __init__(self, monitor: Display, all_monitors: List[Display], **kwargs):
+    def __init__(self, monitor: Display, **kwargs):
         super().__init__(**kwargs)
         self.monitor = monitor
-        self.all_monitors = all_monitors
 
     def compose(self) -> ComposeResult:
-        is_mirroring = self.monitor.mirror_of != "none"
-        mirror_label = f"→ {self.monitor.mirror_of}" if is_mirroring else ""
-        ws = self.monitor.active_workspace_name
-        hz = self.monitor.refreshRate
-
-        # Mark 144Hz monitors with a special indicator
-        hz_label = f"{hz:.0f}Hz"
-        if hz >= 143:
-            hz_label = f"⚡{hz:.0f}Hz"
-
-        with Horizontal(classes="display-container"):
-            yield Label("", id=f"icon-{self.monitor.name}", classes="status-icon")
-
-            with Vertical(classes="display-info"):
-                yield Label(
-                    f"󰍹  {self.monitor.name}  [WS {ws}]{('  󰿏  ' + mirror_label) if is_mirroring else ''}",
-                    classes="display-name"
-                )
-                yield Label(
-                    f"{self.monitor.description[:48]}  ·  {self.monitor.width}×{self.monitor.height} @ {hz_label}",
-                    classes="display-detail"
-                )
-
-            with Vertical(classes="display-actions"):
-                switch = Switch(id=f"switch-{self.monitor.name}")
-                switch.display_name = self.monitor.name
-                yield switch
-                mirror_variant = "warning" if is_mirroring else "default"
-                mirror_btn = Button(
-                    "󰿏 Mirror [m]",
-                    variant=mirror_variant,
-                    id=f"mirror-btn-{self.monitor.name}",
-                    classes="action-btn"
-                )
-                mirror_btn.monitor_name = self.monitor.name
-                yield mirror_btn
+        with Middle():
+            with Center():
+                with Vertical(id="hz-dialog"):
+                    yield Label(f"⚡  Frequency Selector — {self.monitor.name}", id="hz-title")
+                    yield Label("↑↓ navigate · Enter/Space select · Esc cancel", id="hz-prompt")
+                    with Vertical(id="hz-options"):
+                        seen = set()
+                        for mode in self.monitor.available_modes:
+                            if mode in seen:
+                                continue
+                            seen.add(mode)
+                            # Highlight current/best mode
+                            is_best = (mode.split("@")[0] == f"{self.monitor.width}x{self.monitor.height}"
+                                       and mode == self.monitor.best_mode.replace(".", "") or False)
+                            current = abs(self.monitor.refreshRate - float(mode.split("@")[1].replace("Hz", ""))) < 1
+                            suffix = "  ← current" if current else ("  ← best" if is_best else "")
+                            variant = "success" if current else "default"
+                            yield Button(
+                                f"{mode}{suffix}",
+                                id=f"hz-mode-{mode.replace('@', '-').replace('.', '_')}",
+                                classes="modal-btn",
+                                variant=variant,
+                            )
+                    yield Button("Cancel", variant="default", id="hz-cancel", classes="modal-btn")
 
     def on_mount(self) -> None:
-        self.is_enabled = not self.monitor.disabled
-        self.query_one(Switch).value = self.is_enabled
-
-    def watch_is_enabled(self, old_val: bool, new_val: bool) -> None:
+        # Focus the button matching current Hz
         try:
-            self.query_one(f"#icon-{self.monitor.name}", Label).update(
-                "🟢" if new_val else "🔴"
-            )
+            btns = self.query(".modal-btn")
+            for btn in btns:
+                if "current" in (btn.label if isinstance(btn.label, str) else str(btn.label)):
+                    btn.focus()
+                    return
+            btns.first(Button).focus()
         except Exception:
             pass
 
-    def action_toggle_switch(self) -> None:
-        """Toggle the monitor's switch when Space/Enter pressed on the card."""
-        sw = self.query_one(Switch)
-        sw.value = not sw.value
+    def action_cancel(self) -> None:
+        self.dismiss(None)
 
-    def action_open_mirror(self) -> None:
-        """Open mirror dialog for this card via 'm' shortcut."""
-        # Let the App handle it through on_button_pressed by simulating a button press
-        self.app.handle_mirror_for(self.monitor.name)
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        btn_id = event.button.id or ""
+        if btn_id == "hz-cancel":
+            self.dismiss(None)
+        elif btn_id.startswith("hz-mode-"):
+            # Recover original mode string from id
+            raw = btn_id[len("hz-mode-"):]
+            # Find the matching original mode string
+            key = raw.replace("-", "@", 1).replace("_", ".")
+            # Match against available_modes
+            for mode in self.monitor.available_modes:
+                safe = mode.replace("@", "-").replace(".", "_")
+                if safe == raw:
+                    self.dismiss(mode)
+                    return
+            self.dismiss(None)
 
 
 class ConfirmDisplayScreen(ModalScreen[bool]):
-    """A modal screen that asks for confirmation before a timeout."""
+    """A modal that requires confirmation before a 15s timeout, then reverts."""
 
     countdown = reactive(15)
 
@@ -184,6 +176,92 @@ class ConfirmDisplayScreen(ModalScreen[bool]):
         self.dismiss(event.button.id == "btn-keep")
 
 
+# ─────────────────────────────────────────────────────────────
+#  Display Card Widget
+# ─────────────────────────────────────────────────────────────
+
+class DisplayWidget(Horizontal):
+    """
+    A focusable monitor card.
+
+    Keyboard shortcuts (active when card is focused):
+      Space / Enter  → toggle on/off switch
+      m              → open Mirror selector
+      h              → open Hz/frequency selector
+    """
+
+    can_focus = True
+    is_enabled = reactive(False)
+
+    BINDINGS = [
+        ("space", "toggle_monitor", "Toggle On/Off"),
+        ("enter", "toggle_monitor", "Toggle On/Off"),
+        ("m", "open_mirror", "Mirror (m)"),
+        ("h", "open_hz", "Hz Picker (h)"),
+    ]
+
+    def __init__(self, monitor: Display, all_monitors: List[Display], **kwargs):
+        super().__init__(**kwargs)
+        self.monitor = monitor
+        self.all_monitors = all_monitors
+
+    def compose(self) -> ComposeResult:
+        is_mirroring = self.monitor.mirror_of != "none"
+        mirror_badge = f"  󰿏→{self.monitor.mirror_of}" if is_mirroring else ""
+        ws = self.monitor.active_workspace_name
+        hz = self.monitor.refreshRate
+        hz_label = f"⚡{hz:.0f}Hz" if hz >= 100 else f"{hz:.0f}Hz"
+
+        with Horizontal(classes="display-container"):
+            yield Label("", id=f"icon-{self.monitor.name}", classes="status-icon")
+
+            with Vertical(classes="display-info"):
+                yield Label(
+                    f"󰍹  {self.monitor.name}  [WS {ws}]{mirror_badge}",
+                    classes="display-name"
+                )
+                yield Label(
+                    f"{self.monitor.description[:48]}  ·  {self.monitor.width}×{self.monitor.height} @ {hz_label}",
+                    classes="display-detail"
+                )
+
+            with Vertical(classes="display-hints"):
+                yield Label("[Space] On/Off", classes="hint-label")
+                yield Label("[m] Mirror · [h] Hz", classes="hint-label")
+
+            # Switch is non-focusable; the card itself is the focus unit
+            switch = Switch(id=f"switch-{self.monitor.name}")
+            switch.display_name = self.monitor.name
+            switch.can_focus = False
+            yield switch
+
+    def on_mount(self) -> None:
+        self.is_enabled = not self.monitor.disabled
+        self.query_one(Switch).value = self.is_enabled
+
+    def watch_is_enabled(self, old_val: bool, new_val: bool) -> None:
+        try:
+            self.query_one(f"#icon-{self.monitor.name}", Label).update(
+                "🟢" if new_val else "🔴"
+            )
+        except Exception:
+            pass
+
+    def action_toggle_monitor(self) -> None:
+        sw = self.query_one(Switch)
+        sw.value = not sw.value
+
+    def action_open_mirror(self) -> None:
+        self.app.handle_mirror_for(self.monitor.name)
+
+    def action_open_hz(self) -> None:
+        self.app.handle_hz_for(self.monitor)
+
+
+# ─────────────────────────────────────────────────────────────
+#  Main App
+# ─────────────────────────────────────────────────────────────
+
 class DisplayTUIApp(App):
     """hyprmonitor – TUI Display Layout Controller for Hyprland."""
 
@@ -209,25 +287,20 @@ class DisplayTUIApp(App):
         border-bottom: solid $primary;
     }
 
-    /* Card */
+    /* Monitor Card */
     .display-container {
         height: auto;
         padding: 1 2;
-        margin-bottom: 2;
+        margin-bottom: 1;
         align: left middle;
         background: $surface;
         border: solid $surface-lighten-2;
-        transition: background 300ms in_out_cubic, border 300ms in_out_cubic;
+        transition: background 200ms linear, border 200ms linear;
     }
 
     DisplayWidget:focus .display-container {
         border: solid $accent;
         background: $boost;
-    }
-
-    .display-container:hover {
-        background: $boost;
-        border: solid $accent;
     }
 
     .status-icon {
@@ -251,21 +324,22 @@ class DisplayTUIApp(App):
         color: $text-muted;
     }
 
-    .display-actions {
-        width: auto;
+    .display-hints {
+        width: 22;
         height: auto;
-        align: center middle;
-        padding-left: 2;
+        content-align: right middle;
+        padding-right: 2;
     }
 
-    .action-btn {
-        margin-top: 1;
-        min-width: 14;
+    .hint-label {
+        color: $text-muted;
+        text-style: dim;
+        text-align: right;
     }
 
-    /* Mirror Dialog */
-    #mirror-dialog {
-        width: 60%;
+    /* ── Modals shared ─────────────────────────── */
+    #mirror-dialog, #hz-dialog {
+        width: 62%;
         height: auto;
         padding: 2 4;
         background: $surface;
@@ -273,19 +347,6 @@ class DisplayTUIApp(App):
         align: center middle;
     }
 
-    #mirror-title {
-        text-style: bold;
-        color: $accent;
-        padding-bottom: 1;
-    }
-
-    #mirror-prompt { color: $text-muted; padding-bottom: 1; }
-
-    #mirror-options { height: auto; padding-bottom: 1; }
-
-    .mirror-btn { margin-bottom: 1; }
-
-    /* Confirm Dialog */
     #confirm-dialog {
         width: 60%;
         height: auto;
@@ -295,13 +356,31 @@ class DisplayTUIApp(App):
         align: center middle;
     }
 
+    #mirror-title, #hz-title {
+        text-style: bold;
+        color: $accent;
+        padding-bottom: 1;
+    }
+
     #confirm-title {
         text-style: bold;
         color: $warning;
         padding-bottom: 1;
     }
 
-    #countdown-label { color: $text-muted; padding-bottom: 2; }
+    #mirror-prompt, #hz-prompt, #countdown-label {
+        color: $text-muted;
+        padding-bottom: 1;
+    }
+
+    #mirror-options, #hz-options {
+        height: auto;
+        padding-bottom: 1;
+        max-height: 20;
+        overflow-y: auto;
+    }
+
+    .modal-btn { margin-bottom: 1; }
 
     #confirm-buttons {
         height: auto;
@@ -374,48 +453,63 @@ class DisplayTUIApp(App):
 
     def _finish_initialization(self) -> None:
         self.is_initializing = False
-        # Focus first card
         try:
             self.query_one(DisplayWidget).focus()
         except Exception:
             pass
 
-    # ── Mirror ──────────────────────────────────────────────────────────────
+    # ── Mirror ────────────────────────────────────────────────
 
     def handle_mirror_for(self, monitor_name: str) -> None:
-        """Open the mirror selection modal for a given monitor name."""
         def handle_result(source: str | None) -> None:
             if source is None:
                 return
             if source == "__disable__":
                 ok, msg = DisplayManager.unset_mirror(monitor_name)
-                severity = "information" if ok else "error"
-                self.notify(
-                    f"Mirror disabled on {monitor_name}" if ok else f"Error: {msg}",
-                    severity=severity
-                )
             else:
                 ok, msg = DisplayManager.set_mirror(source, monitor_name)
-                severity = "information" if ok else "error"
-                self.notify(
-                    f"{monitor_name} now mirrors {source}" if ok else f"Error: {msg}",
-                    severity=severity
-                )
+
+            self.notify(
+                f"{'Mirror disabled on' if source == '__disable__' else f'{monitor_name} mirrors'} {monitor_name if source == '__disable__' else source} ✓"
+                if ok else f"Error: {msg}",
+                severity="information" if ok else "error"
+            )
             if ok:
-                self.set_timer(0.5, self.action_refresh_displays)
+                self.set_timer(0.6, self.action_refresh_displays)
 
         self.push_screen(
             MirrorSelectScreen(monitors=self._displays, target_name=monitor_name),
             handle_result
         )
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        btn_id = event.button.id or ""
-        if btn_id.startswith("mirror-btn-"):
-            monitor_name = btn_id[len("mirror-btn-"):]
-            self.handle_mirror_for(monitor_name)
+    # ── Hz selector ───────────────────────────────────────────
 
-    # ── Switch toggle ────────────────────────────────────────────────────────
+    def handle_hz_for(self, monitor: Display) -> None:
+        def handle_result(mode: str | None) -> None:
+            if not mode:
+                return
+            # mode looks like "1920x1080@143.85Hz"
+            try:
+                res, hz_part = mode.split("@")
+                hz = hz_part.replace("Hz", "")
+                cmd_mode = f"{res}@{hz}"
+            except Exception:
+                cmd_mode = "preferred"
+
+            import subprocess
+            try:
+                subprocess.run(
+                    ["hyprctl", "keyword", "monitor", f"{monitor.name},{cmd_mode},auto,1"],
+                    capture_output=True, text=True, check=True
+                )
+                self.notify(f"{monitor.name} → {mode} ✓", severity="information")
+                self.set_timer(0.6, self.action_refresh_displays)
+            except Exception as e:
+                self.notify(f"Error: {e}", severity="error")
+
+        self.push_screen(HzSelectScreen(monitor=monitor), handle_result)
+
+    # ── Switch toggle ─────────────────────────────────────────
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
         if self.is_initializing:
@@ -429,7 +523,6 @@ class DisplayTUIApp(App):
             return
 
         previous_state = not is_enabled
-        # Find the monitor's best mode so re-enable uses 144Hz instead of 60Hz
         best_mode = next(
             (d.best_mode for d in self._displays if d.name == display_name),
             "preferred"
@@ -438,7 +531,9 @@ class DisplayTUIApp(App):
 
         if not success:
             self.notify(f"Failed: {msg}", severity="error")
+            self.is_initializing = True
             switch.value = previous_state
+            self.set_timer(0.2, self._finish_initialization)
             return
 
         action = "enabled" if is_enabled else "disabled"
@@ -451,7 +546,7 @@ class DisplayTUIApp(App):
                 self.notify(f"{display_name} {action} ✓", severity="information")
             else:
                 self.notify("Reverting...", severity="warning")
-                DisplayManager.set_display_state(display_name, previous_state)
+                DisplayManager.set_display_state(display_name, previous_state, best_mode)
                 self.is_initializing = True
                 switch.value = previous_state
                 if widget:
@@ -460,7 +555,7 @@ class DisplayTUIApp(App):
 
         self.push_screen(ConfirmDisplayScreen(), check_confirmation)
 
-    # ── Helpers ──────────────────────────────────────────────────────────────
+    # ── Helpers ───────────────────────────────────────────────
 
     def _find_display_widget(self, node) -> "DisplayWidget | None":
         for ancestor in node.ancestors:
