@@ -6,6 +6,19 @@ from textual.theme import Theme
 from textual.screen import ModalScreen
 from display_manager import DisplayManager, Display
 from typing import List
+from rich.text import Text
+
+
+def mnemonic(label: str, key: str, key_style: str = "bold underline") -> Text:
+    """Return a Rich Text with the first occurrence of `key` styled as a mnemonic."""
+    t = Text()
+    idx = label.lower().find(key.lower())
+    if idx == -1:
+        return Text(label)
+    t.append(label[:idx])
+    t.append(label[idx], style=key_style)
+    t.append(label[idx + 1:])
+    return t
 
 
 # ─────────────────────────────────────────────────────────────
@@ -15,7 +28,10 @@ from typing import List
 class MirrorSelectScreen(ModalScreen[str | None]):
     """Modal to select a source monitor to mirror from."""
 
-    BINDINGS = [("escape", "cancel", "Cancel")]
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+        ("space", "press_focused", "Select"),
+    ]
 
     def __init__(self, monitors: List[Display], target_name: str, **kwargs):
         super().__init__(**kwargs)
@@ -27,17 +43,23 @@ class MirrorSelectScreen(ModalScreen[str | None]):
             with Center():
                 with Vertical(id="mirror-dialog"):
                     yield Label(f"󰿏  Mirror  {self.target_name}  from:", id="mirror-title")
-                    yield Label("↑↓ navigate · Enter/Space select · Esc cancel", id="mirror-prompt")
+                    yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="mirror-prompt")
                     with Vertical(id="mirror-options"):
                         for m in self.monitors:
                             if m.name != self.target_name:
                                 yield Button(
-                                    f"󰍹  {m.name}  ({m.description[:30]})",
+                                    mnemonic(f"󰍹  {m.name}  ({m.description[:28]})", m.name[0]),
                                     id=f"mirror-src-{m.name}",
                                     classes="modal-btn"
                                 )
-                        yield Button("✕  Disable Mirror Mode", variant="warning", id="mirror-disable", classes="modal-btn")
-                    yield Button("Cancel", variant="default", id="mirror-cancel", classes="modal-btn")
+                        yield Button(
+                            mnemonic("✕  Disable Mirror Mode", "D"),
+                            variant="warning", id="mirror-disable", classes="modal-btn"
+                        )
+                    yield Button(
+                        mnemonic("Cancel", "C"),
+                        variant="default", id="mirror-cancel", classes="modal-btn"
+                    )
 
     def on_mount(self) -> None:
         try:
@@ -47,6 +69,10 @@ class MirrorSelectScreen(ModalScreen[str | None]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+    def action_press_focused(self) -> None:
+        if self.focused and isinstance(self.focused, Button):
+            self.focused.press()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id or ""
@@ -61,7 +87,10 @@ class MirrorSelectScreen(ModalScreen[str | None]):
 class HzSelectScreen(ModalScreen[str | None]):
     """Modal to select a display mode (resolution@Hz)."""
 
-    BINDINGS = [("escape", "cancel", "Cancel")]
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+        ("space", "press_focused", "Select"),
+    ]
 
     def __init__(self, monitor: Display, **kwargs):
         super().__init__(**kwargs)
@@ -72,33 +101,36 @@ class HzSelectScreen(ModalScreen[str | None]):
             with Center():
                 with Vertical(id="hz-dialog"):
                     yield Label(f"⚡  Frequency Selector — {self.monitor.name}", id="hz-title")
-                    yield Label("↑↓ navigate · Enter/Space select · Esc cancel", id="hz-prompt")
+                    yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="hz-prompt")
                     with Vertical(id="hz-options"):
                         seen = set()
                         for mode in self.monitor.available_modes:
                             if mode in seen:
                                 continue
                             seen.add(mode)
-                            # Highlight current/best mode
-                            is_best = (mode.split("@")[0] == f"{self.monitor.width}x{self.monitor.height}"
-                                       and mode == self.monitor.best_mode.replace(".", "") or False)
                             current = abs(self.monitor.refreshRate - float(mode.split("@")[1].replace("Hz", ""))) < 1
-                            suffix = "  ← current" if current else ("  ← best" if is_best else "")
+                            suffix = "  ← current" if current else ""
                             variant = "success" if current else "default"
+                            label = Text()
+                            label.append(mode)
+                            if suffix:
+                                label.append(suffix, style="dim")
                             yield Button(
-                                f"{mode}{suffix}",
+                                label,
                                 id=f"hz-mode-{mode.replace('@', '-').replace('.', '_')}",
                                 classes="modal-btn",
                                 variant=variant,
                             )
-                    yield Button("Cancel", variant="default", id="hz-cancel", classes="modal-btn")
+                    yield Button(
+                        mnemonic("Cancel", "C"),
+                        variant="default", id="hz-cancel", classes="modal-btn"
+                    )
 
     def on_mount(self) -> None:
-        # Focus the button matching current Hz
         try:
             btns = self.query(".modal-btn")
             for btn in btns:
-                if "current" in (btn.label if isinstance(btn.label, str) else str(btn.label)):
+                if "current" in str(btn.label):
                     btn.focus()
                     return
             btns.first(Button).focus()
@@ -107,6 +139,10 @@ class HzSelectScreen(ModalScreen[str | None]):
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+    def action_press_focused(self) -> None:
+        if self.focused and isinstance(self.focused, Button):
+            self.focused.press()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id or ""
@@ -226,8 +262,8 @@ class DisplayWidget(Horizontal):
                 )
 
             with Vertical(classes="display-hints"):
-                yield Label("[Space] On/Off", classes="hint-label")
-                yield Label("[m] Mirror · [h] Hz", classes="hint-label")
+                yield Label("[$accent]Space[/$accent]  On/Off", classes="hint-label", markup=True)
+                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z-pick", classes="hint-label", markup=True)
 
             # Switch is non-focusable; the card itself is the focus unit
             switch = Switch(id=f"switch-{self.monitor.name}")
