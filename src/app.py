@@ -7,6 +7,7 @@ from textual.theme import Theme
 from core.display_manager import DisplayManager, Display
 from ui.screens.mirror import MirrorSelectScreen
 from ui.screens.confirm import ConfirmDisplayScreen
+from ui.screens.profile import ProfileScreen
 from ui.components.display_card import DisplayWidget
 
 class DisplayTUIApp(App):
@@ -20,6 +21,7 @@ class DisplayTUIApp(App):
         ("q", "quit", "Quit"),
         ("r", "refresh_displays", "Refresh"),
         ("t", "cycle_theme", "Cycle Theme"),
+        ("P", "open_profiles", "Profiles"),
     ]
 
     THEMES_LIST = ["textual-dark", "glass", "hacker", "nordic"]
@@ -135,6 +137,18 @@ class DisplayTUIApp(App):
                     self.notify(f"Failed: {msg}", severity="error")
 
         self.push_screen(MirrorSelectScreen(target_name, self._displays), check_mirror)
+
+    def action_open_profiles(self) -> None:
+        def check_profile(result: Tuple[bool, str] | None) -> None:
+            if result:
+                success, msg = result
+                if success:
+                    self.notify(msg, severity="information")
+                    self.refresh_displays()
+                else:
+                    self.notify(f"Failed: {msg}", severity="error")
+
+        self.push_screen(ProfileScreen(self._displays), check_profile)
 
 if __name__ == "__main__":
     app = DisplayTUIApp()

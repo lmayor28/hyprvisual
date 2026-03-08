@@ -76,7 +76,7 @@ Switch {
 }
 
 /* ── Modals shared ─────────────────────────── */
-#mirror-dialog, #hz-dialog, #position-dialog {
+#mirror-dialog, #hz-dialog, #position-dialog, #profile-dialog {
     width: 62%;
     height: auto;
     padding: 2 4;
@@ -93,7 +93,7 @@ Switch {
     align: center middle;
 }
 
-#mirror-title, #hz-title, #position-title {
+#mirror-title, #hz-title, #position-title, #profile-title {
     text-style: bold;
     color: $accent;
     padding-bottom: 1;
@@ -105,18 +105,42 @@ Switch {
     padding-bottom: 1;
 }
 
-#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer {
+#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer, #profile-prompt {
     color: $text-muted;
     padding-bottom: 1;
 }
 
-#mirror-options, #hz-options {
+#mirror-options, #hz-options, #profile-list {
     height: 18;
     overflow-y: auto;
     margin-top: 1;
 }
 
 .modal-btn { margin-bottom: 1; }
+
+#profile-input-row {
+    height: 3;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+#profile-input {
+    width: 2fr;
+    margin-right: 1;
+}
+
+.profile-item {
+    height: 3;
+    padding-right: 1;
+    align: left middle;
+}
+
+.profile-name {
+    width: 1fr;
+    color: $text;
+}
+
+.btn-load { margin-right: 1; }
 
 #confirm-buttons, #position-buttons, #position-buttons-y {
     height: auto;
