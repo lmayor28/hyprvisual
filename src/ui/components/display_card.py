@@ -9,6 +9,7 @@ from core.display_manager import Display
 from ui.screens.hz import HzSelectScreen
 from ui.screens.position import PositionSelectScreen
 from ui.screens.scale import ScaleSelectScreen
+from ui.screens.workspace import WorkspaceSelectScreen
 
 class DisplayWidget(Widget):
     """A card widget representing a single monitor display."""
@@ -23,7 +24,8 @@ class DisplayWidget(Widget):
         ("h", "open_hz", "Hz (h)"),
         ("p", "open_position", "Position (p)"),
         ("s", "open_scale", "Scale (s)"),
-        ("i", "identify_blink", "Identify (i)")
+        ("i", "identify_blink", "Identify (i)"),
+        ("w", "open_workspace", "Workspace (w)")
     ]
 
     def __init__(self, monitor: Display, all_monitors: List[Display], **kwargs):
@@ -55,7 +57,7 @@ class DisplayWidget(Widget):
 
             with Vertical(classes="display-hints"):
                 yield Label("[$accent]Space[/$accent]  On/Off", classes="hint-label", markup=True)
-                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z  ·  [$accent]p[/$accent]os  ·  [$accent]s[/$accent]cale  ·  [$accent]i[/$accent]dentify", classes="hint-label", markup=True)
+                yield Label("[$accent]m[/$accent]irror  ·  [$accent]p[/$accent]os  ·  [$accent]s[/$accent]cale  ·  [$accent]i[/$accent]dentify  ·  [$accent]w[/$accent]space", classes="hint-label", markup=True)
 
             switch = Switch(id=f"switch-{self.monitor.name}")
             switch.value = self.is_enabled
@@ -159,3 +161,19 @@ class DisplayWidget(Widget):
     async def _blink_worker(self) -> None:
         from core.display_manager import DisplayManager
         DisplayManager.identify_blink(self.monitor.name)
+
+    def action_open_workspace(self) -> None:
+        if self.monitor.disabled:
+            self.notify(f"{self.monitor.name} is disabled.", severity="error")
+            return
+            
+        def check_ws(result: Tuple[bool, str] | None) -> None:
+            if result:
+                success, msg = result
+                if success:
+                    self.notify(msg, severity="information")
+                    self.app.refresh_displays()  # type: ignore
+                else:
+                    self.notify(f"Failed: {msg}", severity="error")
+
+        self.app.push_screen(WorkspaceSelectScreen(self.monitor), check_ws)

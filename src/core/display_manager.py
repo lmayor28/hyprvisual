@@ -151,6 +151,16 @@ class DisplayManager:
         except Exception as e:
             return False, str(e)
 
+    @staticmethod
+    def bind_workspace_to_monitor(monitor_name: str, workspace_id: int):
+        """Bind a specific workspace ID to always open on a specific monitor."""
+        cmd = ["hyprctl", "keyword", "workspace", f"{workspace_id}, monitor:{monitor_name}, default:true"]
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return True, "Bound workspace"
+        except subprocess.CalledProcessError as e:
+            return False, f"Error: {e.stderr}"
+
 if __name__ == "__main__":
     manager = DisplayManager()
     displays = manager.get_displays()

@@ -76,7 +76,7 @@ Switch {
 }
 
 /* ── Modals shared ─────────────────────────── */
-#mirror-dialog, #hz-dialog, #position-dialog, #profile-dialog, #scale-dialog {
+#mirror-dialog, #hz-dialog, #position-dialog, #profile-dialog, #scale-dialog, #workspace-dialog {
     width: 62%;
     height: auto;
     padding: 2 4;
@@ -93,7 +93,7 @@ Switch {
     align: center middle;
 }
 
-#mirror-title, #hz-title, #position-title, #profile-title, #scale-title {
+#mirror-title, #hz-title, #position-title, #profile-title, #scale-title, #workspace-title {
     text-style: bold;
     color: $accent;
     padding-bottom: 1;
@@ -105,7 +105,7 @@ Switch {
     padding-bottom: 1;
 }
 
-#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer, #profile-prompt, #scale-prompt {
+#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer, #profile-prompt, #scale-prompt, #workspace-prompt {
     color: $text-muted;
     padding-bottom: 1;
 }
@@ -142,10 +142,19 @@ Switch {
 
 .btn-load { margin-right: 1; }
 
-#confirm-buttons, #position-buttons, #position-buttons-y {
+#confirm-buttons, #position-buttons, #position-buttons-y, #workspace-buttons {
     height: auto;
     align: center middle;
     padding-top: 1;
 }
 
-#confirm-buttons Button, #position-buttons Button, #position-buttons-y Button { margin: 0 2; }
+#confirm-buttons Button, #position-buttons Button, #position-buttons-y Button, #workspace-buttons Button { margin: 0 2; }
+
+#workspace-input-row {
+    height: 3;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+#workspace-input {
+    width: 2fr;
+}
