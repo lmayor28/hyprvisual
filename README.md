@@ -23,7 +23,17 @@ A modern, fast, and feature-rich terminal user interface (TUI) to manage Hyprlan
 
 ## Installation
 
-Clone the repository and install dependencies:
+### Automated Install (Recommended)
+
+You can easily install `hyprmonitor` and add it to your `PATH` with a single command:
+
+```bash
+curl -sS https://raw.githubusercontent.com/yourusername/hyprmonitor/main/install.sh | bash
+```
+
+This will clone the repository, set up an isolated Python virtual environment, and create an executable command `hyprmonitor` in your `~/.local/bin`.
+
+### Manual Install
 
 ```bash
 git clone https://github.com/yourusername/hyprmonitor.git
@@ -33,7 +43,7 @@ cd hyprmonitor/display-tui
 uv sync
 
 # Or using pip
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install textual
 ```
