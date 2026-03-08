@@ -1,9 +1,12 @@
 [project]
-name = "display-tui"
+name = "hyprmonitor-tui"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Textual TUI to manage Hyprland monitor layouts, mirror modes, and refresh rates."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "textual>=8.0.2",
 ]
+
+[project.scripts]
+hyprmonitor = "main:main"
