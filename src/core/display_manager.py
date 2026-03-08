@@ -14,6 +14,7 @@ class Display:
     refreshRate: float
     x: int = 0
     y: int = 0
+    scale: float = 1.0
     active_workspace_id: int = 1
     active_workspace_name: str = "1"
     mirror_of: str = "none"
@@ -61,6 +62,7 @@ class DisplayManager:
                     refreshRate=item.get("refreshRate", 0.0),
                     x=item.get("x", 0),
                     y=item.get("y", 0),
+                    scale=item.get("scale", 1.0),
                     active_workspace_id=ws.get("id", 1),
                     active_workspace_name=ws.get("name", "1"),
                     mirror_of=item.get("mirrorOf", "none"),
@@ -116,6 +118,25 @@ class DisplayManager:
 
         return True, "Success"
 
+    @staticmethod
+    def set_position(name: str, x: int, y: int, resolution: str = "preferred", scale: float = 1.0):
+        """Move the monitor to a specific X/Y coordinate."""
+        cmd = ["hyprctl", "keyword", "monitor", f"{name},{resolution},{x}x{y},{scale}"]
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return True, "Success"
+        except subprocess.CalledProcessError as e:
+            return False, f"Error: {e.stderr}"
+
+    @staticmethod
+    def set_scale(name: str, scale: float, resolution: str = "preferred", x: int = 0, y: int = 0):
+        """Set the scale (e.g., 1.0, 1.25, 1.5) for a monitor."""
+        cmd = ["hyprctl", "keyword", "monitor", f"{name},{resolution},{x}x{y},{scale}"]
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return True, "Success"
+        except subprocess.CalledProcessError as e:
+            return False, f"Error: {e.stderr}"
 
 if __name__ == "__main__":
     manager = DisplayManager()

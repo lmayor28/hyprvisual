@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [project.scripts]
-hyprvisual = "main:main"
+hyprvisual = "src.app:app"
