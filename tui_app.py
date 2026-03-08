@@ -42,18 +42,18 @@ class MirrorSelectScreen(ModalScreen[str | None]):
         with Middle():
             with Center():
                 with Vertical(id="mirror-dialog"):
-                    yield Label(f"󰿏  Mirror  {self.target_name}  from:", id="mirror-title")
+                    yield Label(f"Mirror {self.target_name} from:", id="mirror-title")
                     yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="mirror-prompt")
                     with Vertical(id="mirror-options"):
                         for m in self.monitors:
                             if m.name != self.target_name:
                                 yield Button(
-                                    mnemonic(f"󰍹  {m.name}  ({m.description[:28]})", m.name[0]),
+                                    mnemonic(f"{m.name}  ({m.description[:28]})", m.name[0]),
                                     id=f"mirror-src-{m.name}",
                                     classes="modal-btn"
                                 )
                         yield Button(
-                            mnemonic("✕  Disable Mirror Mode", "D"),
+                            mnemonic("Disable Mirror Mode", "D"),
                             variant="warning", id="mirror-disable", classes="modal-btn"
                         )
                     yield Button(
@@ -100,7 +100,7 @@ class HzSelectScreen(ModalScreen[str | None]):
         with Middle():
             with Center():
                 with Vertical(id="hz-dialog"):
-                    yield Label(f"⚡  Frequency Selector — {self.monitor.name}", id="hz-title")
+                    yield Label(f"Frequency Selector — {self.monitor.name}", id="hz-title")
                     yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="hz-prompt")
                     with Vertical(id="hz-options"):
                         seen = set()
@@ -175,13 +175,17 @@ class ConfirmDisplayScreen(ModalScreen[bool]):
         ("escape", "cancel", "Cancel")
     ]
 
+    def __init__(self, monitor_name: str, **kwargs):
+        super().__init__(**kwargs)
+        self.monitor_name = monitor_name
+
     def compose(self) -> ComposeResult:
         with Middle():
             with Center():
                 with Vertical(id="confirm-dialog"):
-                    yield Label("Display setup changed.", id="confirm-title")
-                    yield Label("Keep this configuration?", id="confirm-prompt")
-                    yield Label(f"Reverting in {self.countdown} seconds...", id="countdown-label")
+                    yield Label(f"Disabled {self.monitor_name}", id="confirm-title")
+                    yield Label("Are you sure you want to keep this layout?", id="confirm-prompt")
+                    yield Label(f"Reverting automatically in {self.countdown} seconds...", id="confirm-timer")
                     with Horizontal(id="confirm-buttons"):
                         yield Button("Keep Changes  [←]", variant="success", id="btn-keep")
                         yield Button("[→]  Revert", variant="error", id="btn-revert")
@@ -243,17 +247,17 @@ class DisplayWidget(Horizontal):
 
     def compose(self) -> ComposeResult:
         is_mirroring = self.monitor.mirror_of != "none"
-        mirror_badge = f"  󰿏→{self.monitor.mirror_of}" if is_mirroring else ""
+        mirror_badge = f"  (Mirror: {self.monitor.mirror_of})" if is_mirroring else ""
         ws = self.monitor.active_workspace_name
         hz = self.monitor.refreshRate
-        hz_label = f"⚡{hz:.0f}Hz" if hz >= 100 else f"{hz:.0f}Hz"
+        hz_label = f"{hz:.0f}Hz"
 
         with Horizontal(classes="display-container"):
             yield Label("", id=f"icon-{self.monitor.name}", classes="status-icon")
 
             with Vertical(classes="display-info"):
                 yield Label(
-                    f"󰍹  {self.monitor.name}  [WS {ws}]{mirror_badge}",
+                    f"{self.monitor.name}  [WS {ws}]{mirror_badge}",
                     classes="display-name"
                 )
                 yield Label(
@@ -278,7 +282,7 @@ class DisplayWidget(Horizontal):
     def watch_is_enabled(self, old_val: bool, new_val: bool) -> None:
         try:
             self.query_one(f"#icon-{self.monitor.name}", Label).update(
-                "🟢" if new_val else "🔴"
+                "ON" if new_val else "OFF"
             )
         except Exception:
             pass
@@ -299,7 +303,9 @@ class DisplayWidget(Horizontal):
 # ─────────────────────────────────────────────────────────────
 
 class DisplayTUIApp(App):
-    """hyprmonitor – TUI Display Layout Controller for Hyprland."""
+    # Textual equivalent of docstring / command name
+    TITLE = "hyprvisual"
+    """hyprvisual – TUI Display Layout Controller for Hyprland."""
 
     CSS = """
     Screen {
@@ -442,7 +448,7 @@ class DisplayTUIApp(App):
         self._displays: List[Display] = []
 
     def on_mount(self) -> None:
-        self.title = "hyprmonitor – Display Layout Controller"
+        self.title = "hyprvisual – Display Layout Controller"
 
         self.register_theme(Theme(
             name="glass", primary="#42A5F5", accent="#2196F3",

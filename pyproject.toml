@@ -1,5 +1,5 @@
 [project]
-name = "hyprmonitor-tui"
+name = "hyprvisual"
 version = "0.1.0"
 description = "A Textual TUI to manage Hyprland monitor layouts, mirror modes, and refresh rates."
 readme = "README.md"
@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [project.scripts]
-hyprmonitor = "main:main"
+hyprvisual = "main:main"

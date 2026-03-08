@@ -1,8 +1,8 @@
-# hyprmonitor
+# hyprvisual
 
 A modern, fast, and feature-rich terminal user interface (TUI) to manage Hyprland monitor layouts, built with Python and [Textual](https://github.com/Textualize/textual).
 
-![hyprmonitor demo](https://textual.textualize.io/assets/images/logo.svg) <!-- Replace with an actual screenshot of the app -->
+![hyprvisual demo](https://textual.textualize.io/assets/images/logo.svg) <!-- Replace with an actual screenshot of the app -->
 
 ## Features
 
@@ -25,19 +25,19 @@ A modern, fast, and feature-rich terminal user interface (TUI) to manage Hyprlan
 
 ### Automated Install (Recommended)
 
-You can easily install `hyprmonitor` and add it to your `PATH` with a single command:
+You can easily install `hyprvisual` and add it to your `PATH` with a single command:
 
 ```bash
-curl -sS https://raw.githubusercontent.com/yourusername/hyprmonitor/main/install.sh | bash
+curl -sS https://raw.githubusercontent.com/yourusername/hyprvisual/main/install.sh | bash
 ```
 
-This will clone the repository, set up an isolated Python virtual environment, and create an executable command `hyprmonitor` in your `~/.local/bin`.
+This will clone the repository, set up an isolated Python virtual environment, and create an executable command `hyprvisual` in your `~/.local/bin`.
 
 ### Manual Install
 
 ```bash
-git clone https://github.com/yourusername/hyprmonitor.git
-cd hyprmonitor/display-tui
+git clone https://github.com/yourusername/hyprvisual.git
+cd hyprvisual/hyprvisual
 
 # Using uv (recommended)
 uv sync

@@ -2,7 +2,7 @@ import sys
 from tui_app import DisplayTUIApp
 
 def main():
-    """Entry point for hyprmonitor display-tui."""
+    """Entry point for hyprvisual."""
     app = DisplayTUIApp()
     app.run()
 
