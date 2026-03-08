@@ -76,7 +76,7 @@ Switch {
 }
 
 /* ── Modals shared ─────────────────────────── */
-#mirror-dialog, #hz-dialog, #position-dialog, #profile-dialog {
+#mirror-dialog, #hz-dialog, #position-dialog, #profile-dialog, #scale-dialog {
     width: 62%;
     height: auto;
     padding: 2 4;
@@ -93,7 +93,7 @@ Switch {
     align: center middle;
 }
 
-#mirror-title, #hz-title, #position-title, #profile-title {
+#mirror-title, #hz-title, #position-title, #profile-title, #scale-title {
     text-style: bold;
     color: $accent;
     padding-bottom: 1;
@@ -105,12 +105,12 @@ Switch {
     padding-bottom: 1;
 }
 
-#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer, #profile-prompt {
+#mirror-prompt, #hz-prompt, #position-prompt, #position-current, #confirm-timer, #profile-prompt, #scale-prompt {
     color: $text-muted;
     padding-bottom: 1;
 }
 
-#mirror-options, #hz-options, #profile-list {
+#mirror-options, #hz-options, #profile-list, #scale-options {
     height: 18;
     overflow-y: auto;
     margin-top: 1;

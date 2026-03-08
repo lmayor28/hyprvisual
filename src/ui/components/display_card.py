@@ -8,6 +8,7 @@ from textual.reactive import reactive
 from core.display_manager import Display
 from ui.screens.hz import HzSelectScreen
 from ui.screens.position import PositionSelectScreen
+from ui.screens.scale import ScaleSelectScreen
 
 class DisplayWidget(Widget):
     """A card widget representing a single monitor display."""
@@ -20,7 +21,8 @@ class DisplayWidget(Widget):
         ("enter", "toggle_monitor", "Toggle On/Off"),
         ("m", "open_mirror", "Mirror (m)"),
         ("h", "open_hz", "Hz (h)"),
-        ("p", "open_position", "Position (p)")
+        ("p", "open_position", "Position (p)"),
+        ("s", "open_scale", "Scale (s)")
     ]
 
     def __init__(self, monitor: Display, all_monitors: List[Display], **kwargs):
@@ -46,13 +48,13 @@ class DisplayWidget(Widget):
                     classes="display-name"
                 )
                 yield Label(
-                    f"{self.monitor.description}  ·  {self.monitor.width}x{self.monitor.height} @ {hz_label}",
+                    f"{self.monitor.description}  ·  {self.monitor.width}x{self.monitor.height} @ {hz_label}  ·  Scale: {self.monitor.scale:.2f}x",
                     classes="display-desc"
                 )
 
             with Vertical(classes="display-hints"):
                 yield Label("[$accent]Space[/$accent]  On/Off", classes="hint-label", markup=True)
-                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z  ·  [$accent]p[/$accent]os", classes="hint-label", markup=True)
+                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z  ·  [$accent]p[/$accent]os  ·  [$accent]s[/$accent]cale", classes="hint-label", markup=True)
 
             switch = Switch(id=f"switch-{self.monitor.name}")
             switch.value = self.is_enabled
@@ -126,3 +128,19 @@ class DisplayWidget(Widget):
                     self.notify(f"Failed: {msg}", severity="error")
 
         self.app.push_screen(PositionSelectScreen(self.monitor, self.all_monitors), check_pos)
+
+    def action_open_scale(self) -> None:
+        if self.monitor.disabled:
+            self.notify(f"{self.monitor.name} is disabled.", severity="error")
+            return
+
+        def check_scale(result: Tuple[bool, str] | None) -> None:
+            if result:
+                success, msg = result
+                if success:
+                    self.notify(msg, severity="information")
+                    self.app.refresh_displays()  # type: ignore
+                else:
+                    self.notify(f"Failed: {msg}", severity="error")
+
+        self.app.push_screen(ScaleSelectScreen(self.monitor), check_scale)
