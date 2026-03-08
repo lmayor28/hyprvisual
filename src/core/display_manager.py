@@ -138,6 +138,19 @@ class DisplayManager:
         except subprocess.CalledProcessError as e:
             return False, f"Error: {e.stderr}"
 
+    @staticmethod
+    def identify_blink(name: str):
+        """Blink a monitor by rapidly cycling DPMS off and on to physically identify it."""
+        try:
+            # We don't check=True because if DPMS is already off it might throw, we just want the blink effect
+            import time
+            subprocess.run(["hyprctl", "dispatch", "dpms", "off", name], capture_output=True)
+            time.sleep(0.3)
+            subprocess.run(["hyprctl", "dispatch", "dpms", "on", name], capture_output=True)
+            return True, "Blinked"
+        except Exception as e:
+            return False, str(e)
+
 if __name__ == "__main__":
     manager = DisplayManager()
     displays = manager.get_displays()

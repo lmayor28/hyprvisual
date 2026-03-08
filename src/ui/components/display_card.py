@@ -22,7 +22,8 @@ class DisplayWidget(Widget):
         ("m", "open_mirror", "Mirror (m)"),
         ("h", "open_hz", "Hz (h)"),
         ("p", "open_position", "Position (p)"),
-        ("s", "open_scale", "Scale (s)")
+        ("s", "open_scale", "Scale (s)"),
+        ("i", "identify_blink", "Identify (i)")
     ]
 
     def __init__(self, monitor: Display, all_monitors: List[Display], **kwargs):
@@ -54,7 +55,7 @@ class DisplayWidget(Widget):
 
             with Vertical(classes="display-hints"):
                 yield Label("[$accent]Space[/$accent]  On/Off", classes="hint-label", markup=True)
-                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z  ·  [$accent]p[/$accent]os  ·  [$accent]s[/$accent]cale", classes="hint-label", markup=True)
+                yield Label("[$accent]m[/$accent]irror  ·  [$accent]h[/$accent]z  ·  [$accent]p[/$accent]os  ·  [$accent]s[/$accent]cale  ·  [$accent]i[/$accent]dentify", classes="hint-label", markup=True)
 
             switch = Switch(id=f"switch-{self.monitor.name}")
             switch.value = self.is_enabled
@@ -144,3 +145,17 @@ class DisplayWidget(Widget):
                     self.notify(f"Failed: {msg}", severity="error")
 
         self.app.push_screen(ScaleSelectScreen(self.monitor), check_scale)
+
+    def action_identify_blink(self) -> None:
+        if self.monitor.disabled:
+            self.notify(f"{self.monitor.name} is disabled.", severity="error")
+            return
+            
+        from core.display_manager import DisplayManager
+        self.notify(f"Blinking {self.monitor.name}...", severity="information")
+        # Run asynchronously so we don't freeze the TUI during the time.sleep(0.3)
+        self.run_worker(self._blink_worker)
+        
+    async def _blink_worker(self) -> None:
+        from core.display_manager import DisplayManager
+        DisplayManager.identify_blink(self.monitor.name)
