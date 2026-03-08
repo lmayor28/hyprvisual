@@ -42,13 +42,13 @@ class MirrorSelectScreen(ModalScreen[str | None]):
         with Middle():
             with Center():
                 with Vertical(id="mirror-dialog"):
-                    yield Label(f"Mirror {self.target_name} from:", id="mirror-title")
+                    yield Label(f"󰿏  Mirror  {self.target_name}  from:", id="mirror-title")
                     yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="mirror-prompt")
                     with Vertical(id="mirror-options"):
                         for m in self.monitors:
                             if m.name != self.target_name:
                                 yield Button(
-                                    mnemonic(f"{m.name}  ({m.description[:28]})", m.name[0]),
+                                    mnemonic(f"󰍹  {m.name}  ({m.description[:28]})", m.name[0]),
                                     id=f"mirror-src-{m.name}",
                                     classes="modal-btn"
                                 )
@@ -247,7 +247,7 @@ class DisplayWidget(Horizontal):
 
     def compose(self) -> ComposeResult:
         is_mirroring = self.monitor.mirror_of != "none"
-        mirror_badge = f"  (Mirror: {self.monitor.mirror_of})" if is_mirroring else ""
+        mirror_badge = f"  󰿏→{self.monitor.mirror_of}" if is_mirroring else ""
         ws = self.monitor.active_workspace_name
         hz = self.monitor.refreshRate
         hz_label = f"{hz:.0f}Hz"
@@ -257,7 +257,7 @@ class DisplayWidget(Horizontal):
 
             with Vertical(classes="display-info"):
                 yield Label(
-                    f"{self.monitor.name}  [WS {ws}]{mirror_badge}",
+                    f"󰍹  {self.monitor.name}  [WS {ws}]{mirror_badge}",
                     classes="display-name"
                 )
                 yield Label(
