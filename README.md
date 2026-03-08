@@ -28,7 +28,7 @@ A modern, fast, and feature-rich terminal user interface (TUI) to manage Hyprlan
 You can easily install `hyprvisual` and add it to your `PATH` with a single command:
 
 ```bash
-curl -sS https://raw.githubusercontent.com/yourusername/hyprvisual/main/install.sh | bash
+curl -sS https://raw.githubusercontent.com/lmayor28/hyprvisual/main/install.sh | bash
 ```
 
 This will clone the repository, set up an isolated Python virtual environment, and create an executable command `hyprvisual` in your `~/.local/bin`.
