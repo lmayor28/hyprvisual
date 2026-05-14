@@ -1,6 +1,6 @@
 # Maintainer: lmayor28 <lmayormoreno@gmail.com>
 pkgname=hyprvisual-git
-pkgver=r1.0
+pkgver=r19.33c2510
 pkgrel=1
 pkgdesc="TUI monitor layout controller for Hyprland"
 arch=('any')
