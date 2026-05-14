@@ -4,7 +4,7 @@ from textual.containers import Vertical, Horizontal, Center, Middle, VerticalScr
 from textual.widgets import Button, Label, Input
 from textual.screen import ModalScreen
 
-from core.display_manager import DisplayManager, Display
+from hyprvisual.core.display_manager import DisplayManager, Display
 
 class WorkspaceSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     """Modal to assign a default workspace ID to a monitor."""

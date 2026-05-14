@@ -4,7 +4,7 @@ from dataclasses import asdict
 from typing import Dict, Any, List, Tuple
 from pathlib import Path
 
-from core.display_manager import Display, DisplayManager
+from hyprvisual.core.display_manager import Display, DisplayManager
 
 CONFIG_DIR = Path(os.path.expanduser("~/.config/hypr"))
 CONFIG_FILE = CONFIG_DIR / "hyprvisual.json"
@@ -93,8 +93,8 @@ class ProfileManager:
         # Step 3: Apply mirrors last (hyprland requires the source to exist first)
         for saved in target_state:
             mirror_of = saved.get("mirror_of", "none")
-            name = saved["name"]
+            monitor_name = saved["name"]
             if mirror_of != "none":
-                DisplayManager.set_mirror(mirror_of, name)
+                DisplayManager.set_mirror(mirror_of, monitor_name)
                 
         return True, "Success"

@@ -4,7 +4,7 @@ from textual.containers import Vertical, Horizontal, Center, Middle, VerticalScr
 from textual.widgets import Button, Label
 from textual.screen import ModalScreen
 
-from core.display_manager import DisplayManager, Display
+from hyprvisual.core.display_manager import DisplayManager, Display
 
 class HzSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     """Modal to select resolution and frequency."""
@@ -27,12 +27,12 @@ class HzSelectScreen(ModalScreen[Tuple[bool, str] | None]):
                     yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="hz-prompt")
                     with VerticalScroll(id="hz-options"):
                         seen = set()
+                        active_mode = f"{self.monitor.width}x{self.monitor.height}@{self.monitor.refreshRate:.2f}Hz"
                         for mode in self.monitor.available_modes:
                             safe = mode.replace("@", "-").replace(".", "_")
                             if safe not in seen:
                                 seen.add(safe)
-                                # highlight if it's currently active (we map against best_mode just as a proxy here)
-                                is_current = mode.startswith(self.monitor.best_mode)
+                                is_current = mode == active_mode
                                 suffix = "  [dim]← current[/dim]" if is_current else ""
                                 yield Button(f"{mode}{suffix}", id=f"mode-{safe}", classes="modal-btn")
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=hyprvisual
+GenericName=Monitor Layout Manager
+Comment=TUI monitor layout controller for Hyprland
+Exec=hyprvisual
+Icon=video-display
+Terminal=true
+Type=Application
+Categories=System;Settings;
+Keywords=monitor;display;hyprland;wayland;layout;resolution;

@@ -4,7 +4,7 @@ from textual.containers import Vertical, Horizontal, Center, Middle
 from textual.widgets import Button, Label
 from textual.screen import ModalScreen
 
-from core.display_manager import DisplayManager, Display
+from hyprvisual.core.display_manager import DisplayManager, Display
 
 class PositionSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     """Modal to select a display position."""
@@ -45,12 +45,6 @@ class PositionSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     def on_mount(self) -> None:
         self.query_one("#pos-apply").focus()
 
-    def get_primary_monitor(self) -> Display:
-        for m in self.all_monitors:
-            if m.x == 0 and m.y == 0:
-                return m
-        return self.all_monitors[0] if self.all_monitors else self.monitor
-
     def _update_position_label(self) -> None:
         self.query_one("#position-current", Label).update(f"New: X={self.monitor.x} Y={self.monitor.y}")
 
@@ -60,24 +54,16 @@ class PositionSelectScreen(ModalScreen[Tuple[bool, str] | None]):
         self._update_position_label()
 
     def action_move_left(self) -> None:
-        primary = self.get_primary_monitor()
-        step_x = primary.width if primary else 1920
-        self._move_monitor(-step_x, 0)
+        self._move_monitor(-self.monitor.width, 0)
 
     def action_move_right(self) -> None:
-        primary = self.get_primary_monitor()
-        step_x = primary.width if primary else 1920
-        self._move_monitor(step_x, 0)
+        self._move_monitor(self.monitor.width, 0)
 
     def action_move_up(self) -> None:
-        primary = self.get_primary_monitor()
-        step_y = primary.height if primary else 1080
-        self._move_monitor(0, -step_y)
+        self._move_monitor(0, -self.monitor.height)
 
     def action_move_down(self) -> None:
-        primary = self.get_primary_monitor()
-        step_y = primary.height if primary else 1080
-        self._move_monitor(0, step_y)
+        self._move_monitor(0, self.monitor.height)
 
     def action_apply(self) -> None:
         success, msg = DisplayManager.set_position(
@@ -88,18 +74,14 @@ class PositionSelectScreen(ModalScreen[Tuple[bool, str] | None]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
-        primary = self.get_primary_monitor()
-        step_x = primary.width if primary else 1920
-        step_y = primary.height if primary else 1080
-
         if btn_id == "pos-left":
-            self._move_monitor(-step_x, 0)
+            self._move_monitor(-self.monitor.width, 0)
         elif btn_id == "pos-right":
-            self._move_monitor(step_x, 0)
+            self._move_monitor(self.monitor.width, 0)
         elif btn_id == "pos-up":
-            self._move_monitor(0, -step_y)
+            self._move_monitor(0, -self.monitor.height)
         elif btn_id == "pos-down":
-            self._move_monitor(0, step_y)
+            self._move_monitor(0, self.monitor.height)
         elif btn_id == "pos-apply":
             self.action_apply()
 

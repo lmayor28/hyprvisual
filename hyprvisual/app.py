@@ -1,21 +1,22 @@
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Tuple
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import Header, Footer
 from textual.theme import Theme
 
-from core.display_manager import DisplayManager, Display
-from ui.screens.mirror import MirrorSelectScreen
-from ui.screens.confirm import ConfirmDisplayScreen
-from ui.screens.profile import ProfileScreen
-from ui.components.display_card import DisplayWidget
+from hyprvisual.core.display_manager import DisplayManager, Display
+from hyprvisual.ui.screens.mirror import MirrorSelectScreen
+from hyprvisual.ui.screens.confirm import ConfirmDisplayScreen
+from hyprvisual.ui.screens.profile import ProfileScreen
+from hyprvisual.ui.components.display_card import DisplayWidget
 
 class DisplayTUIApp(App):
     # Textual equivalent of docstring / command name
     TITLE = "hyprvisual"
     """hyprvisual – TUI Display Layout Controller for Hyprland."""
 
-    CSS_PATH = "app.tcss"
+    CSS_PATH = Path(__file__).parent / "app.tcss"
 
     BINDINGS = [
         ("q", "quit", "Quit"),
@@ -98,7 +99,8 @@ class DisplayTUIApp(App):
     def handle_toggle_for(self, monitor: Display, new_val: bool) -> None:
         if new_val:
             success, msg = DisplayManager.set_display_state(
-                monitor.name, enable=True, best_mode=monitor.best_mode
+                monitor.name, enable=True, best_mode=monitor.best_mode,
+                x=monitor.x, y=monitor.y, scale=monitor.scale
             )
             if success:
                 self.notify(f"{monitor.name} Enabled ✓", severity="information")
@@ -116,7 +118,8 @@ class DisplayTUIApp(App):
                     if not result:
                         self.notify(f"Reverting {monitor.name} back ON.", severity="error")
                         DisplayManager.set_display_state(
-                            monitor.name, enable=True, best_mode=monitor.best_mode
+                            monitor.name, enable=True, best_mode=monitor.best_mode,
+                            x=monitor.x, y=monitor.y, scale=monitor.scale
                         )
                     else:
                         self.notify("Layout configuration kept.", severity="success")
@@ -150,6 +153,9 @@ class DisplayTUIApp(App):
 
         self.push_screen(ProfileScreen(self._displays), check_profile)
 
+def run() -> None:
+    """Entry point for the installed `hyprvisual` command."""
+    DisplayTUIApp().run()
+
 if __name__ == "__main__":
-    app = DisplayTUIApp()
-    app.run()
+    run()

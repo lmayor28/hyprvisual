@@ -5,11 +5,11 @@ from textual.widgets import Label, Switch
 from textual.widget import Widget
 from textual.reactive import reactive
 
-from core.display_manager import Display
-from ui.screens.hz import HzSelectScreen
-from ui.screens.position import PositionSelectScreen
-from ui.screens.scale import ScaleSelectScreen
-from ui.screens.workspace import WorkspaceSelectScreen
+from hyprvisual.core.display_manager import Display
+from hyprvisual.ui.screens.hz import HzSelectScreen
+from hyprvisual.ui.screens.position import PositionSelectScreen
+from hyprvisual.ui.screens.scale import ScaleSelectScreen
+from hyprvisual.ui.screens.workspace import WorkspaceSelectScreen
 
 class DisplayWidget(Widget):
     """A card widget representing a single monitor display."""
@@ -89,13 +89,13 @@ class DisplayWidget(Widget):
 
     def action_toggle_monitor(self) -> None:
         """Called when Space/Enter is pressed while the card is focused."""
-        from app import DisplayTUIApp # lazy import to avoid circular dependency
+        from hyprvisual.app import DisplayTUIApp # lazy import to avoid circular dependency
         app = self.app
         if isinstance(app, DisplayTUIApp):
             app.handle_toggle_for(self.monitor, not self.is_enabled)
 
     def action_open_mirror(self) -> None:
-        from app import DisplayTUIApp
+        from hyprvisual.app import DisplayTUIApp
         app = self.app
         if isinstance(app, DisplayTUIApp):
             app.handle_mirror_for(self.monitor.name)
@@ -153,13 +153,12 @@ class DisplayWidget(Widget):
             self.notify(f"{self.monitor.name} is disabled.", severity="error")
             return
             
-        from core.display_manager import DisplayManager
+        from hyprvisual.core.display_manager import DisplayManager
         self.notify(f"Blinking {self.monitor.name}...", severity="information")
-        # Run asynchronously so we don't freeze the TUI during the time.sleep(0.3)
-        self.run_worker(self._blink_worker)
-        
-    async def _blink_worker(self) -> None:
-        from core.display_manager import DisplayManager
+        self.run_worker(self._blink_worker, thread=True)
+
+    def _blink_worker(self) -> None:
+        from hyprvisual.core.display_manager import DisplayManager
         DisplayManager.identify_blink(self.monitor.name)
 
     def action_open_workspace(self) -> None:

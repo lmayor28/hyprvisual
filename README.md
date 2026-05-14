@@ -58,21 +58,29 @@ uv run main.py
 
 ### Keybindings
 
-| Key | Action |
-| --- | --- |
-| `Tab` | Navigate between monitor cards |
-| `Space` / `Enter` | Toggle the focused monitor On/Off |
-| `m` | Open Mirror source selection |
-| `h` | Open Refresh Rate and Resolution picker |
-| `r` | Refresh displays manually |
-| `t` | Cycle through themes (Nordic, Hacker, Glass, Dark) |
-| `q` | Quit the application |
+| Key | Scope | Action |
+| --- | --- | --- |
+| `Tab` | Global | Navigate between monitor cards |
+| `Space` / `Enter` | Card | Toggle the focused monitor On/Off |
+| `m` | Card | Open Mirror source selection |
+| `h` | Card | Open Refresh Rate and Resolution picker |
+| `p` | Card | Adjust X/Y position |
+| `s` | Card | Adjust scale (0.5x – 3.0x) |
+| `i` | Card | Blink monitor to physically identify it |
+| `w` | Card | Assign default workspace |
+| `P` | Global | Open Layout Profiles manager |
+| `r` | Global | Refresh displays |
+| `t` | Global | Cycle through themes (Nordic, Hacker, Glass, Dark) |
+| `q` | Global | Quit |
 
 ## Architecture
 
-- **`tui_app.py`**: The Textual frontend containing the layout, cards, and modals.
-- **`display_manager.py`**: The backend logic that interfaces with `hyprctl monitors -j` and parses `availableModes` to configure Hyprland.
-- **`main.py`**: The entry point.
+- **`src/app.py`**: Main `DisplayTUIApp` class — themes, global keybindings, modal orchestration.
+- **`src/core/display_manager.py`**: All `hyprctl` interaction. Parses `hyprctl monitors all -j` into `Display` dataclasses and issues `hyprctl keyword monitor` commands.
+- **`src/core/profile_manager.py`**: Saves/loads/applies layouts to `~/.config/hypr/hyprvisual.json`.
+- **`src/ui/components/display_card.py`**: Per-monitor card widget with all per-card keybindings.
+- **`src/ui/screens/`**: Modal screens — mirror, hz, position, scale, workspace, profile, confirm.
+- **`main.py`**: Entry point.
 
 ## Contributing
 

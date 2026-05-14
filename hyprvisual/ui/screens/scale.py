@@ -4,7 +4,7 @@ from textual.containers import Vertical, Horizontal, Center, Middle, VerticalScr
 from textual.widgets import Button, Label
 from textual.screen import ModalScreen
 
-from core.display_manager import DisplayManager, Display
+from hyprvisual.core.display_manager import DisplayManager, Display
 
 class ScaleSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     """Modal to select Wayland display scale."""
@@ -29,7 +29,7 @@ class ScaleSelectScreen(ModalScreen[Tuple[bool, str] | None]):
                     yield Label("↑↓ move  ·  Space/Enter select  ·  Esc cancel", id="scale-prompt")
                     with VerticalScroll(id="scale-options"):
                         for s in self.SCALES:
-                            is_current = self.monitor.scale == s
+                            is_current = abs(self.monitor.scale - s) < 0.01
                             suffix = "  [dim]← current[/dim]" if is_current else ""
                             yield Button(f"{s:.2f}x{suffix}", id=f"scale-{s}", classes="modal-btn")
 

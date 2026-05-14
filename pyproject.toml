@@ -1,12 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "hyprvisual"
 version = "0.1.0"
-description = "A Textual TUI to manage Hyprland monitor layouts, mirror modes, and refresh rates."
+description = "TUI monitor layout controller for Hyprland"
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.12"
+keywords = ["hyprland", "wayland", "monitor", "display", "tui"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Desktop Environment",
+]
 dependencies = [
-    "textual>=8.0.2",
+    "textual>=0.80.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/lmayor28/hyprvisual"
+Repository = "https://github.com/lmayor28/hyprvisual"
+Issues = "https://github.com/lmayor28/hyprvisual/issues"
+
 [project.scripts]
-hyprvisual = "src.app:app"
+hyprvisual = "hyprvisual.app:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["hyprvisual"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"hyprvisual/app.tcss" = "hyprvisual/app.tcss"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -4,8 +4,8 @@ from textual.containers import Vertical, Horizontal, Center, Middle
 from textual.widgets import Button, Label
 from textual.screen import ModalScreen
 
-from core.display_manager import DisplayManager, Display
-from ui.utils import mnemonic
+from hyprvisual.core.display_manager import DisplayManager, Display
+from hyprvisual.ui.utils import mnemonic
 
 class MirrorSelectScreen(ModalScreen[Tuple[bool, str] | None]):
     """Modal to select a source monitor for mirroring."""

@@ -76,10 +76,11 @@ class DisplayManager:
             return []
 
     @staticmethod
-    def set_display_state(name: str, enable: bool, best_mode: str = "preferred"):
+    def set_display_state(name: str, enable: bool, best_mode: str = "preferred",
+                          x: int = 0, y: int = 0, scale: float = 1.0):
         """Enable or disable a specific display using best available mode."""
         if enable:
-            cmd = ["hyprctl", "keyword", "monitor", f"{name},{best_mode},auto,1"]
+            cmd = ["hyprctl", "keyword", "monitor", f"{name},{best_mode},{x}x{y},{scale}"]
         else:
             cmd = ["hyprctl", "keyword", "monitor", f"{name},disable"]
         try:
